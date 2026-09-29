@@ -1,0 +1,15 @@
+   # Gradle
+   .gradle/
+   build/
+   
+   # IDE
+   .idea/
+   *.iml
+   .vscode/
+   
+   # OS
+   .DS_Store
+   Thumbs.db
+   
+   # Local config (if you had secrets, though ours are in application.conf for now)
+   local.properties
