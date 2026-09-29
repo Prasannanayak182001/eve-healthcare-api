@@ -1,39 +1,60 @@
-# api
+# EVE Healthcare API
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+A robust, production-ready REST API for managing diagnostic centre bookings, built with **Kotlin**, **Ktor**, and **PostgreSQL**.
 
-Here are some useful links to get you started:
- * [Ktor Documentation](https://ktor.io/docs/home.html)
- * [Ktor GitHub page](https://github.com/ktorio/ktor)
- * [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). [Request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
+## 🚀 Features
+- **JWT Authentication**: Secure user signup and login with BCrypt password hashing.
+- **Resource Management**: CRUD operations for Diagnostic Centres and Tests.
+- **Booking System**: State-machine based booking flow (PENDING -> CONFIRMED/FAILED).
+- **Idempotent Webhooks**: Safely handles duplicate payment gateway callbacks without data corruption.
+- **Production-Grade DB**: Uses HikariCP connection pooling for high performance.
+- **OpenAPI Documentation**: Auto-generated Swagger UI for easy API exploration.
 
+## 🛠️ Tech Stack
+- **Language**: Kotlin
+- **Framework**: Ktor 3.x
+- **Database**: PostgreSQL (Neon Serverless)
+- **ORM**: Exposed (Kotlin SQL Framework)
+- **Connection Pool**: HikariCP
+- **Auth**: JWT (JSON Web Tokens) + BCrypt
 
-## Features
-Here's a list of features included in this project:
+## 🗄️ Database Design & Edge Cases
+- **Idempotency Key**: The `payments` table uses a `UNIQUE` constraint on `provider_transaction_id`. If a payment gateway retries a webhook due to network issues, the database rejects the duplicate insert, preventing double-charging or state corruption.
+- **Denormalization**: The `bookings` table includes a `centre_id` column. This prevents expensive `JOIN` queries when fetching user history and preserves historical accuracy even if a test is moved to a different centre later.
+- **Connection Pooling**: HikariCP is configured with a pool size of 10 to handle concurrent requests efficiently without exhausting database connections.
 
-| Name | Description |
-|------|-------------|
-| [OpenAPI](https://start.ktor.io/p/io.ktor/server-openapi) | Serves OpenAPI documentation |
-| [Authentication](https://start.ktor.io/p/io.ktor/server-auth) | Provides extension point for handling the Authorization header |
-| [Authentication JWT](https://start.ktor.io/p/io.ktor/server-auth-jwt) | Handles JSON Web Token (JWT) bearer authentication scheme |
-| [Status Pages](https://start.ktor.io/p/io.ktor/server-status-pages) | Provides exception handling for routes |
-| [Resources](https://start.ktor.io/p/io.ktor/server-resources) | Provides type-safe routing |
-| [Content Negotiation](https://start.ktor.io/p/io.ktor/server-content-negotiation) | Provides automatic content conversion according to Content-Type and Accept headers |
-| [kotlinx.serialization](https://start.ktor.io/p/io.ktor/server-kotlinx-serialization) | Handles JSON serialization using kotlinx.serialization library |
+## 🏃‍️ How to Run
 
+### Prerequisites
+- JDK 17 or higher
+- Internet connection (connects to Neon Cloud DB)
 
-## Building & Running
-To build or run the project, use one of the following tasks:
+### Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/eve-healthcare-api.git
+   cd eve-healthcare-api
 
+Start the server:
 
-| Task | Description |
-|------|-------------|
-| `./gradlew test`    | Run the tests     |
-| `./gradlew build`   | Build the project |
-| `./gradlew run`     | Run the server    |
+   # Windows
+.\gradlew.bat run
 
-If the server starts successfully, you'll see the following output:
-```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
-```
+# Mac/Linux
+./gradlew run
+
+The API will be available at http://localhost:8080.
+📡 API Endpoints
+Authentication
+POST /auth/signup - Register a new user
+POST /auth/login - Login and receive JWT token
+Centres & Tests (Public Read / Protected Write)
+GET /centres - List all centres
+POST /centres - Create a centre (Requires JWT)
+GET /tests - List all tests
+POST /tests - Create a test (Requires JWT)
+Bookings & Payments
+POST /bookings - Create a booking (Requires JWT)
+GET /bookings - Get user's bookings (Requires JWT)
+POST /payments/simulate - Simulate a payment (Requires JWT)
+POST /payments/webhook - Handle payment callback (Public, Idempotent)
